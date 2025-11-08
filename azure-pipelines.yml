@@ -51,7 +51,7 @@ stages:
         steps:
           - task: AzureCLI@2
             inputs:
-              azureSubscription: 'SC-FIAP-556496'   # mesma Service Connection
+              azureSubscription: 'SC-AZURE-RM-556496   # mesma Service Connection
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
