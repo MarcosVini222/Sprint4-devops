@@ -10,7 +10,7 @@ pool:
 variables:
   appName: 'motoblu556496'
   acrName: 'acrfiap556496'
-  acrLoginServer: 'acrfiap556496.azurecr.io'
+  acrLoginServer: 'acrrm556496.azurecr.io'
   imageRepository: 'fiap/$(appName)'
   dockerfilePath: '**/Dockerfile'
   tag: '$(Build.BuildNumber)'
