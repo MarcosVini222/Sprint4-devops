@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastro de funcionários</title>
+    <link th:href="@{/webjars/bootstrap/5.3.3/css/bootstrap.min.css}" rel="stylesheet" />
+    <script th:src="@{/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js}" defer></script>
+    <link th:href="@{/css/styles.css}" rel="stylesheet" />
+</head>
+<body>
+    <div th:replace="~{fragments/header :: header}"></div>
+    <div class="cont-principal">
+        <h2 class="h2-forms">Cadastre um funcionário</h2>
+        <div>
+            <form method="post" th:action="@{/pageFuncionario/cadastrar}" th:object="${funcionario}" class="form">
+                <div class="item-form">
+                    <label for="nome">Nome: </label>
+                    <input type="text" id="nome" th:field="*{nome}" class="input">
+                </div>
+                <p th:if="${#fields.hasErrors('nome')}" th:errors="*{nome}" th:errorclass="error"></p>
+                <div class="item-form">
+                    <label for="cpf">CPF:</label>
+                    <input type="text" id="cpf" th:field="*{cpf}" class="input input2">
+                </div>
+                <p th:if="${#fields.hasErrors('cpf')}" th:errors="*{cpf}" th:errorclass="error"></p>
+                <div class="item-form">
+                    <label for="email">Email: </label>
+                    <input type="text" id="email" th:field="*{email}" class="input input3">
+                </div>
+                <p th:if="${#fields.hasErrors('email')}" th:errors="*{email}" th:errorclass="error"></p>
+                <div class="item-form">
+                    <label for="rg">RG: </label>
+                    <input type="text" id="rg" th:field="*{rg}" class="input input4">
+                </div>
+                <p th:if="${#fields.hasErrors('rg')}" th:errors="*{rg}" th:errorclass="error">Erro</p>
+                <div class="item-form">
+                    <label for="telefone">Telefone: </label>
+                    <input type="text" id="telefone" th:field="*{telefone}" class="input input5">
+                </div>
+                <p th:if="${#fields.hasErrors('telefone')}" th:errors="*{telefone}" th:errorclass="error"></p>
+                <div>
+                    <button type="submit">
+                        Cadastrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>
