@@ -14,20 +14,54 @@ variables:
   imageRepository: 'fiap/$(appName)'
   dockerfilePath: '**/Dockerfile'
   tag: '$(Build.BuildNumber)'
+  resourceGroup: 'rg-fiap556496'
+  containerGroup: 'aci-motoblu'
+  location: 'brazilsouth'
 
 stages:
-- stage: Build
-  displayName: 'Build and push image'
-  jobs:
-  - job: BuildAndPush
-    displayName: 'Docker build and push to ACR'
-    steps:
-    - task: Docker@2
-      displayName: 'Build and push image'
-      inputs:
-        containerRegistry: 'SC-FIAP-556496'
-        repository: '$(imageRepository)'
-        command: 'buildAndPush'
-        Dockerfile: '$(dockerfilePath)'
-        tags: |
-          $(tag)
+  # =======================
+  #  STAGE 1 - BUILD & PUSH
+  # =======================
+  - stage: Build
+    displayName: 'Build and push image'
+    jobs:
+      - job: BuildAndPush
+        displayName: 'Docker build and push to ACR'
+        steps:
+          - task: Docker@2
+            displayName: 'Build and push image'
+            inputs:
+              containerRegistry: 'SC-FIAP-556496'   # nome da Service Connection no DevOps
+              repository: '$(imageRepository)'
+              command: 'buildAndPush'
+              Dockerfile: '$(dockerfilePath)'
+              tags: |
+                $(tag)
+
+  # =======================
+  #  STAGE 2 - DEPLOY TO ACI
+  # =======================
+  - stage: Deploy
+    displayName: 'Deploy to Azure Container Instance'
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: DeployToACI
+        displayName: 'Deploy container to Azure'
+        steps:
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: 'SC-FIAP-556496'   # mesma Service Connection
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                echo "Iniciando deploy da aplicação no Azure Container Instance..."
+                az container create \
+                  --resource-group $(resourceGroup) \
+                  --name $(containerGroup) \
+                  --image $(acrLoginServer)/$(imageRepository):$(tag) \
+                  --registry-login-server $(acrLoginServer) \
+                  --dns-name-label $(appName) \
+                  --restart-policy Always \
+                  --ports 8080 \
+                  --location $(location)

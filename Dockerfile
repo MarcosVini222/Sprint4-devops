@@ -1,19 +1,18 @@
-
-FROM gradle:8.7.0-jdk21 AS BUILD
+# Etapa de build
+FROM gradle:8.7.0-jdk21 AS build
 WORKDIR /usr/app
 
 COPY . .
 
-
 RUN chmod +x ./gradlew
+RUN ./gradlew clean build -x test
 
-RUN ./gradlew build -x test
-
-
-FROM eclipse-temurin:21-jdk
+# Etapa de execução
+FROM eclipse-temurin:21-jre
 WORKDIR /app
 
-COPY --from=BUILD /usr/app/build/libs/Sptrint1-0.0.1-SNAPSHOT.jar app.jar
+# Altere o nome do JAR conforme o nome exato gerado em build/libs/
+COPY --from=build /usr/app/build/libs/Sprint1-0.0.1-SNAPSHOT.jar app.jar
 
 EXPOSE 8080
 
