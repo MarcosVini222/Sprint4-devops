@@ -92,8 +92,7 @@ jib {
     to {
         image = 'motoblu-app' // nome da imagem gerada
         tags = ['latest']
-    }
-    container {
+    } container {
         ports = ['8080']
         jvmFlags = ['-Xms512m', '-Xmx1024m']
         environment = [
