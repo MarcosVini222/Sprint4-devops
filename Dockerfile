@@ -1,4 +1,9 @@
-# Etapa de build
+# ============================================================
+# 🚀 Dockerfile para aplicação Spring Boot (Gradle)
+# FIAP Sprint 4 - DevOps Tools & Cloud Computing
+# ============================================================
+
+# ====== ETAPA 1 - BUILD ======
 FROM gradle:8.7.0-jdk21 AS build
 WORKDIR /usr/app
 
@@ -7,12 +12,12 @@ COPY . .
 RUN chmod +x ./gradlew
 RUN ./gradlew clean build -x test
 
-# Etapa de execução
+# ====== ETAPA 2 - RUNTIME ======
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 
-# Altere o nome do JAR conforme o nome exato gerado em build/libs/
-COPY --from=build /usr/app/build/libs/Sprint1-0.0.1-SNAPSHOT.jar app.jar
+# Copia o .jar gerado (independente do nome)
+COPY --from=build /usr/app/build/libs/*.jar app.jar
 
 EXPOSE 8080
 
