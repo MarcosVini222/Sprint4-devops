@@ -9,7 +9,7 @@ version = '0.0.1-SNAPSHOT'
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(17)
     }
 }
 
@@ -22,18 +22,25 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-cache'
-    implementation 'org.flywaydb:flyway-core:10.20.1'
-    implementation 'org.flywaydb:flyway-database-oracle:10.20.1'
-    implementation 'com.oracle.database.jdbc:ojdbc11:23.3.0.23.09'
-    implementation 'org.webjars:bootstrap:5.3.3'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // ✅ Flyway e MySQL
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'mysql:mysql-connector-j:8.0.33'
+
+    // ✅ Validação e segurança
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
-    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
+    // ✅ Front-end
+    implementation 'org.webjars:bootstrap:5.3.3'
     implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
+
+    // ✅ Testes
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
+
 
 tasks.named('test') {
     useJUnitPlatform()
