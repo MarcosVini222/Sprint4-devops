@@ -2,60 +2,75 @@ trigger:
   branches:
     include:
       - main
-      - master
+      - master    # pipeline dispara automaticamente em push para main/master
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: 'ubuntu-latest'   # ambiente Linux no agente hospedado da Microsoft
 
 variables:
-  appName: 'motoblu556496'
-  acrName: 'acrfiap556496'
-  acrLoginServer: 'acrrm556496.azurecr.io'
-  imageRepository: 'fiap/$(appName)'
-  dockerfilePath: '**/Dockerfile'
-  tag: '$(Build.BuildNumber)'
-  resourceGroup: 'rg-fiap556496'
-  containerGroup: 'aci-motoblu'
-  location: 'brazilsouth'
+  # =========================
+  # 🔧 VARIÁVEIS DE CONFIGURAÇÃO
+  # =========================
+  appName: 'motoblu556496'             # nome da aplicação
+  acrName: 'acrrm556496'               # nome do ACR criado no Azure
+  acrLoginServer: 'acrrm556496.azurecr.io'  # endpoint do ACR (obtido via az acr show)
+  imageRepository: 'fiap/$(appName)'   # nome do repositório dentro do ACR
+  dockerfilePath: '**/Dockerfile'      # caminho do Dockerfile
+  tag: '$(Build.BuildNumber)'          # número do build como tag da imagem
+  resourceGroup: 'rg-fiap556496'       # grupo de recursos no Azure
+  containerGroup: 'aci-motoblu'        # nome do Container Instance
+  location: 'brazilsouth'              # região do Azure
 
+# ===============================================================
+# 🏗️ STAGE 1 - BUILD & PUSH (Docker → Azure Container Registry)
+# ===============================================================
 stages:
-  # =======================
-  #  STAGE 1 - BUILD & PUSH
-  # =======================
   - stage: Build
-    displayName: 'Build and push image'
+    displayName: 'Build and push image to ACR'
     jobs:
       - job: BuildAndPush
         displayName: 'Docker build and push to ACR'
         steps:
           - task: Docker@2
-            displayName: 'Build and push image'
+            displayName: '🔨 Build and Push Docker Image'
             inputs:
-              containerRegistry: 'SC-AZURE-RM-556496'   # nome da Service Connection no DevOps
+              # 🔑 Service Connection do tipo "Docker Registry"
+              # Deve apontar para seu ACR (SC-FIAP-556496)
+              containerRegistry: 'SC-FIAP-556496'
               repository: '$(imageRepository)'
               command: 'buildAndPush'
               Dockerfile: '$(dockerfilePath)'
               tags: |
                 $(tag)
 
-  # =======================
-  #  STAGE 2 - DEPLOY TO ACI
-  # =======================
+  # ===============================================================
+  # ☁️ STAGE 2 - DEPLOY (Azure Container Instance)
+  # ===============================================================
   - stage: Deploy
-    displayName: 'Deploy to Azure Container Instance'
+    displayName: 'Deploy image to Azure Container Instance (ACI)'
     dependsOn: Build
     condition: succeeded()
     jobs:
       - job: DeployToACI
-        displayName: 'Deploy container to Azure'
+        displayName: 'Deploy container to Azure ACI'
         steps:
           - task: AzureCLI@2
+            displayName: '🚀 Deploy to Azure ACI'
             inputs:
-              azureSubscription: 'SC-AZURE-RM-556496   # mesma Service Connection
+              # 🔑 Service Connection do tipo "Azure Resource Manager"
+              azureSubscription: 'SC-AZURE-RM-556496'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
-                echo "Iniciando deploy da aplicação no Azure Container Instance..."
+                echo "🔹 Iniciando deploy da aplicação no Azure Container Instance..."
+                
+                # Deleta o container antigo (caso já exista)
+                az container delete \
+                  --resource-group $(resourceGroup) \
+                  --name $(containerGroup) \
+                  --yes || true
+                
+                echo "🔹 Criando novo container com a imagem atualizada..."
                 az container create \
                   --resource-group $(resourceGroup) \
                   --name $(containerGroup) \
@@ -65,3 +80,5 @@ stages:
                   --restart-policy Always \
                   --ports 8080 \
                   --location $(location)
+                
+                echo "✅ Deploy concluído!
