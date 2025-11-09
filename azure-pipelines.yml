@@ -11,9 +11,9 @@ variables:
   appName: 'motoblu556496'             # Nome do container no ACI e DNS
   acrName: 'acrrm556496'               # Nome do seu ACR
   acrLoginServer: 'acrrm556496.azurecr.io'
-  imageRepository: 'motoblu'           # Nome do repositório da imagem (sem espaços)
-  dockerfilePath: 'Dockerfile'         # Caminho relativo do Dockerfile
-  tag: 'latest'                        # Pode usar 'latest' ou $(Build.BuildNumber)
+  imageRepository: 'motoblu'
+  dockerfilePath: 'Dockerfile'
+  tag: 'latest'
   resourceGroup: 'rg_sprint'
   containerGroup: 'aci-motoblu'
   location: 'brazilsouth'
@@ -28,7 +28,7 @@ stages:
           - task: Docker@2
             displayName: 'Build and Push Docker Image to ACR'
             inputs:
-              containerRegistry: 'SC-FIAP-556496'   # Service connection do ACR
+              containerRegistry: 'SC-FIAP-556496'
               repository: '$(imageRepository)'
               command: 'buildAndPush'
               Dockerfile: '$(dockerfilePath)'
@@ -46,23 +46,22 @@ stages:
           - task: AzureCLI@2
             displayName: 'Deploy to Azure Container Instance'
             inputs:
-              azureSubscription: 'SC-AZURE-RM-556496'  # Service connection do Azure
+              azureSubscription: 'SC-AZURE-RM-556496'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
                 echo "🔹 Iniciando deploy da aplicação no Azure Container Instance..."
 
-                # Garantir login no ACR
+                # Login no Azure e no ACR
                 az acr login --name $(acrName)
 
-                # Remover container anterior (se existir)
+                echo "🔹 Removendo container antigo (caso exista)..."
                 az container delete \
                   --resource-group $(resourceGroup) \
                   --name $(containerGroup) \
                   --yes || true
 
-                echo "🔹 Criando novo container com a imagem atualizada..."
-
+                echo "🔹 Criando novo container..."
                 az container create \
                   --resource-group $(resourceGroup) \
                   --name $(containerGroup) \
@@ -70,14 +69,17 @@ stages:
                   --cpu 1 \
                   --memory 1 \
                   --registry-login-server $(acrLoginServer) \
-                  --registry-username $(ACR_USERNAME) \
-                  --registry-password $(ACR_PASSWORD) \
+                  --registry-username $ACR_USERNAME \
+                  --registry-password $ACR_PASSWORD \
                   --dns-name-label $(appName) \
                   --restart-policy Always \
                   --ports 8080 \
                   --location $(location)
 
                 echo "✅ Deploy concluído com sucesso!"
-
-                echo "🌐 Verifique seu app em:"
+                echo "🌐 URL de acesso:"
                 echo "http://$(appName).$(location).azurecontainer.io:8080"
+
+            env:
+              ACR_USERNAME: $(ACR_USERNAME)
+              ACR_PASSWORD: $(ACR_PASSWORD)
