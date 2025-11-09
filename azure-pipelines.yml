@@ -8,15 +8,15 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  appName: 'motoblu556496'             # Nome DNS do container ACI
-  acrName: 'acrrm556496'               # Nome do seu ACR
+  appName: 'motoblu556496'
+  acrName: 'acrrm556496'
   acrLoginServer: 'acrrm556496.azurecr.io'
-  imageRepository: 'motoblu'           # Nome do repositório da imagem
-  dockerfilePath: 'Dockerfile'         # Caminho do Dockerfile
-  tag: 'latest'                        # Tag da imagem
-  resourceGroup: 'rg_sprint'           # Grupo de recursos no Azure
-  containerGroup: 'aci-motoblu'        # Nome do container ACI
-  location: 'brazilsouth'              # Região do Azure
+  imageRepository: 'motoblu'
+  dockerfilePath: 'Dockerfile'
+  tag: 'latest'
+  resourceGroup: 'rg_sprint'
+  containerGroup: 'aci-motoblu'
+  location: 'brazilsouth'
 
 stages:
 
@@ -29,7 +29,7 @@ stages:
           - task: Docker@2
             displayName: 'Build and Push Docker Image to ACR'
             inputs:
-              containerRegistry: 'SC-FIAP-556496'   # Service connection do ACR
+              containerRegistry: 'sc-acr-lorch'
               repository: '$(imageRepository)'
               command: 'buildAndPush'
               Dockerfile: '$(dockerfilePath)'
@@ -47,16 +47,14 @@ stages:
           - task: AzureCLI@2
             displayName: 'Deploy to Azure Container Instance'
             inputs:
-              azureSubscription: 'SC-AZURE-RM-556496'
+              azureSubscription: 'sc-azure-lorch'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
                 echo "🔹 Iniciando deploy no Azure Container Instance..."
 
-                # Login no ACR
                 az acr login --name $(acrName)
 
-                # Remover container anterior (caso exista)
                 az container delete \
                   --resource-group $(resourceGroup) \
                   --name $(containerGroup) \
@@ -78,12 +76,12 @@ stages:
                   --ports 8080 \
                   --environment-variables \
                       DB_HOST="mysqlmotoblu556496.mysql.database.azure.com" \
-                      DB_NAME="flexibleserverdb" \
+                      DB_NAME="motoblu" \
                       DB_USER="motoblu@mysqlmotoblu556496" \
-                      DB_PASS="SenhaForte!123" \
+                      DB_PASS="$(DB_PASS)" \
                       GITHUB_CLIENT_ID="$(GITHUB_CLIENT_ID)" \
                       GITHUB_CLIENT_SECRET="$(GITHUB_CLIENT_SECRET)" \
                   --location $(location)
 
-                echo "✅ Deploy concluído com sucesso!"
-                echo "🌐 URL: http://$(appName).$(location).azurecontainer.io:8080"
+                echo "✅ Deploy concluído!"
+                echo "🌐 Acesse em: http://$(appName).$(location).azurecontainer.io:8080"
