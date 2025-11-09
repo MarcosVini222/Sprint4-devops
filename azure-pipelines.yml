@@ -8,29 +8,27 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  appName: 'motoblu556496'
-  acrName: 'acrrm556496'
+  appName: 'motoblu556496'             # Nome do container no ACI e DNS
+  acrName: 'acrrm556496'               # Nome do seu ACR
   acrLoginServer: 'acrrm556496.azurecr.io'
-  imageRepository: '$(appName)'        
-  dockerfilePath: '**/Dockerfile'
-  tag: '$(Build.BuildNumber)'
+  imageRepository: 'motoblu'           # Nome do repositório da imagem (sem espaços)
+  dockerfilePath: 'Dockerfile'         # Caminho relativo do Dockerfile
+  tag: 'latest'                        # Pode usar 'latest' ou $(Build.BuildNumber)
   resourceGroup: 'rg_sprint'
   containerGroup: 'aci-motoblu'
   location: 'brazilsouth'
-  acrUser: $(ACR_USERNAME)
-  acrPassword: $(ACR_PASSWORD)
 
 stages:
   - stage: Build
     displayName: 'Build and push image to ACR'
     jobs:
       - job: BuildAndPush
-        displayName: 'Docker build and push to ACR'
+        displayName: '🔨 Build and Push Docker Image'
         steps:
           - task: Docker@2
-            displayName: '🔨 Build and Push Docker Image'
+            displayName: 'Build and Push Docker Image to ACR'
             inputs:
-              containerRegistry: 'SC-FIAP-556496'
+              containerRegistry: 'SC-FIAP-556496'   # Service connection do ACR
               repository: '$(imageRepository)'
               command: 'buildAndPush'
               Dockerfile: '$(dockerfilePath)'
@@ -43,34 +41,43 @@ stages:
     condition: succeeded()
     jobs:
       - job: DeployToACI
-        displayName: 'Deploy container to Azure ACI'
+        displayName: '🚀 Deploy container to Azure ACI'
         steps:
           - task: AzureCLI@2
-            displayName: '🚀 Deploy to Azure ACI'
+            displayName: 'Deploy to Azure Container Instance'
             inputs:
-              azureSubscription: 'SC-AZURE-RM-556496'
+              azureSubscription: 'SC-AZURE-RM-556496'  # Service connection do Azure
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
                 echo "🔹 Iniciando deploy da aplicação no Azure Container Instance..."
 
-                # Deleta o container antigo (caso já exista)
+                # Garantir login no ACR
+                az acr login --name $(acrName)
+
+                # Remover container anterior (se existir)
                 az container delete \
                   --resource-group $(resourceGroup) \
                   --name $(containerGroup) \
                   --yes || true
 
                 echo "🔹 Criando novo container com a imagem atualizada..."
+
                 az container create \
                   --resource-group $(resourceGroup) \
                   --name $(containerGroup) \
                   --image $(acrLoginServer)/$(imageRepository):$(tag) \
+                  --cpu 1 \
+                  --memory 1 \
                   --registry-login-server $(acrLoginServer) \
-                  --registry-username $(acrUser) \
-                  --registry-password $(acrPassword) \
+                  --registry-username $(ACR_USERNAME) \
+                  --registry-password $(ACR_PASSWORD) \
                   --dns-name-label $(appName) \
                   --restart-policy Always \
                   --ports 8080 \
                   --location $(location)
 
-                echo "✅ Deploy concluído!"
+                echo "✅ Deploy concluído com sucesso!"
+
+                echo "🌐 Verifique seu app em:"
+                echo "http://$(appName).$(location).azurecontainer.io:8080"
