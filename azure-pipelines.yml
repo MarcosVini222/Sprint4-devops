@@ -2,28 +2,24 @@ trigger:
   branches:
     include:
       - main
-      - master    # Dispara automaticamente quando há push em main/master
+      - master
 
 pool:
-  vmImage: 'ubuntu-latest'   # Agente Linux hospedado pela Microsoft
+  vmImage: 'ubuntu-latest'
 
 variables:
-  # =========================
-  # 🔧 VARIÁVEIS DE CONFIGURAÇÃO
-  # =========================
-  appName: 'motoblu556496'                   # Nome da aplicação
-  acrName: 'acrrm556496'                     # Nome do Azure Container Registry
-  acrLoginServer: 'acrrm556496.azurecr.io'   # Endpoint do ACR (obtido via az acr show)
-  imageRepository: '$(appName)'              # Nome do repositório dentro do ACR
-  dockerfilePath: '**/Dockerfile'            # Caminho do Dockerfile
-  tag: '$(Build.BuildNumber)'                # Número do build como tag da imagem
-  resourceGroup: 'rg_sprint'                 # Grupo de recursos no Azure
-  containerGroup: 'aci-motoblu'              # Nome do Azure Container Instance
-  location: 'brazilsouth'                    # Região do Azure
+  appName: 'motoblu556496'
+  acrName: 'acrrm556496'
+  acrLoginServer: 'acrrm556496.azurecr.io'
+  imageRepository: '$(appName)'        
+  dockerfilePath: '**/Dockerfile'
+  tag: '$(Build.BuildNumber)'
+  resourceGroup: 'rg_sprint'
+  containerGroup: 'aci-motoblu'
+  location: 'brazilsouth'
+  acrUser: $(ACR_USERNAME)
+  acrPassword: $(ACR_PASSWORD)
 
-# ===============================================================
-# 🏗️ STAGE 1 - BUILD & PUSH (Docker → Azure Container Registry)
-# ===============================================================
 stages:
   - stage: Build
     displayName: 'Build and push image to ACR'
@@ -34,8 +30,6 @@ stages:
           - task: Docker@2
             displayName: '🔨 Build and Push Docker Image'
             inputs:
-              # 🔑 Service Connection do tipo "Docker Registry"
-              # Deve apontar para o seu ACR (ex: SC-FIAP-556496)
               containerRegistry: 'SC-FIAP-556496'
               repository: '$(imageRepository)'
               command: 'buildAndPush'
@@ -43,9 +37,6 @@ stages:
               tags: |
                 $(tag)
 
-  # ===============================================================
-  # ☁️ STAGE 2 - DEPLOY (Azure Container Instance)
-  # ===============================================================
   - stage: Deploy
     displayName: 'Deploy image to Azure Container Instance (ACI)'
     dependsOn: Build
@@ -57,7 +48,6 @@ stages:
           - task: AzureCLI@2
             displayName: '🚀 Deploy to Azure ACI'
             inputs:
-              # 🔑 Service Connection do tipo "Azure Resource Manager"
               azureSubscription: 'SC-AZURE-RM-556496'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
