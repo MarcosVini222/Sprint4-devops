@@ -8,17 +8,19 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
+
   appName: 'motoblu556496'             # Nome do container no ACI e DNS
   acrName: 'acrrm556496'               # Nome do seu ACR
   acrLoginServer: 'acrrm556496.azurecr.io'
-  imageRepository: 'motoblu'
-  dockerfilePath: 'Dockerfile'
-  tag: 'latest'
-  resourceGroup: 'rg_sprint'
-  containerGroup: 'aci-motoblu'
-  location: 'brazilsouth'
+  imageRepository: 'motoblu'           # Nome do repositório da imagem no ACR
+  dockerfilePath: 'Dockerfile'         # Caminho do Dockerfile
+  tag: 'latest'                        # Pode ser 'latest' ou $(Build.BuildNumber)
+  resourceGroup: 'rg_sprint'           # Nome do grupo de recursos
+  containerGroup: 'aci-motoblu'        # Nome do container no ACI
+  location: 'brazilsouth'              # Região do Azure
 
 stages:
+
   - stage: Build
     displayName: 'Build and push image to ACR'
     jobs:
@@ -46,31 +48,33 @@ stages:
           - task: AzureCLI@2
             displayName: 'Deploy to Azure Container Instance'
             inputs:
-              azureSubscription: 'SC-AZURE-RM-556496'
+              azureSubscription: 'SC-AZURE-RM-556496'  # Service connection do Azure
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
                 echo "🔹 Iniciando deploy da aplicação no Azure Container Instance..."
 
-                # Login no Azure e no ACR
+                # Login no ACR
                 az acr login --name $(acrName)
 
-                echo "🔹 Removendo container antigo (caso exista)..."
+                # Remover container anterior (caso exista)
                 az container delete \
                   --resource-group $(resourceGroup) \
                   --name $(containerGroup) \
                   --yes || true
 
-                echo "🔹 Criando novo container..."
+                echo "🔹 Criando novo container com a imagem atualizada..."
+
                 az container create \
                   --resource-group $(resourceGroup) \
                   --name $(containerGroup) \
                   --image $(acrLoginServer)/$(imageRepository):$(tag) \
+                  --os-type Linux \
                   --cpu 1 \
                   --memory 1 \
                   --registry-login-server $(acrLoginServer) \
-                  --registry-username $ACR_USERNAME \
-                  --registry-password $ACR_PASSWORD \
+                  --registry-username $(ACR_USERNAME) \
+                  --registry-password $(ACR_PASSWORD) \
                   --dns-name-label $(appName) \
                   --restart-policy Always \
                   --ports 8080 \
@@ -79,7 +83,3 @@ stages:
                 echo "✅ Deploy concluído com sucesso!"
                 echo "🌐 URL de acesso:"
                 echo "http://$(appName).$(location).azurecontainer.io:8080"
-
-            env:
-              ACR_USERNAME: $(ACR_USERNAME)
-              ACR_PASSWORD: $(ACR_PASSWORD)
