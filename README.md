@@ -53,6 +53,8 @@ Este projeto tem como objetivo o desenvolvimento de uma API RESTful em **Java co
 
 ---
 
+Link Video: https://youtu.be/3QE1Y75fh4M
+
 ## 👨‍💻 Integrantes
 
 - **Heitor Ortega** – RM557825  
