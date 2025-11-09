@@ -8,7 +8,7 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-
+  
   appName: 'motoblu556496'             # Nome do container no ACI e DNS
   acrName: 'acrrm556496'               # Nome do seu ACR
   acrLoginServer: 'acrrm556496.azurecr.io'
@@ -30,12 +30,13 @@ stages:
           - task: Docker@2
             displayName: 'Build and Push Docker Image to ACR'
             inputs:
-              containerRegistry: 'SC-FIAP-556496'
+              containerRegistry: 'SC-FIAP-556496'   # Service connection do ACR
               repository: '$(imageRepository)'
               command: 'buildAndPush'
               Dockerfile: '$(dockerfilePath)'
               tags: |
                 $(tag)
+
 
   - stage: Deploy
     displayName: 'Deploy image to Azure Container Instance (ACI)'
@@ -48,7 +49,7 @@ stages:
           - task: AzureCLI@2
             displayName: 'Deploy to Azure Container Instance'
             inputs:
-              azureSubscription: 'SC-AZURE-RM-556496'  # Service connection do Azure
+              azureSubscription: 'SC-AZURE-RM-556496'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
