@@ -1,4 +1,4 @@
-# 🏍️ Sprint 4 - java 
+# 🏍️ Sprint 4 - Devops
 
 ## 📌 Descrição do Projeto
 
